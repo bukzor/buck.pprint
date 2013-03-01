@@ -60,13 +60,13 @@ _len = len
 _type = type
 
 
-def pprint(object, stream=None, indent=1, width=80, depth=None):
+def pprint(object, stream=None, indent=4, width=80, depth=None):
     """Pretty-print a Python object to a stream [default is sys.stdout]."""
     printer = PrettyPrinter(
         stream=stream, indent=indent, width=width, depth=depth)
     printer.pprint(object)
 
-def pformat(object, indent=1, width=80, depth=None):
+def pformat(object, indent=4, width=80, depth=None):
     """Format a Python object into a pretty-printed representation."""
     return PrettyPrinter(indent=indent, width=width, depth=depth).pformat(object)
 
@@ -90,7 +90,7 @@ def _sorted(iterable):
         return sorted(iterable)
 
 class PrettyPrinter:
-    def __init__(self, indent=1, width=80, depth=None, stream=None):
+    def __init__(self, indent=4, width=80, depth=None, stream=None):
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
 

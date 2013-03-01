@@ -170,35 +170,35 @@ class QueryTestCase(unittest.TestCase):
              'write_io_runtime_us': 43690}
         exp = """\
 {
- 'RPM_cal': 0,
- 'RPM_cal2': 48059,
- 'Speed_cal': 0,
- 'controldesk_runtime_us': 0,
- 'main_code_runtime_us': 0,
- 'read_io_runtime_us': 0,
- 'write_io_runtime_us': 43690,
+    'RPM_cal': 0,
+    'RPM_cal2': 48059,
+    'Speed_cal': 0,
+    'controldesk_runtime_us': 0,
+    'main_code_runtime_us': 0,
+    'read_io_runtime_us': 0,
+    'write_io_runtime_us': 43690,
 }"""
         for type in [dict, dict2]:
             act = pprint.pformat(type(o))
             self.assertEqual(act , exp)
 
         o = range(100)
-        exp = '[\n %s,\n]' % ',\n '.join(map(str, o))
+        exp = '[\n    %s,\n]' % ',\n    '.join(map(str, o))
         for type in [list, list2]:
             act = pprint.pformat(type(o))
             self.assertEqual(act, exp)
 
         o = tuple(range(30))
-        exp = '(\n %s,\n)' % ',\n '.join(map(str, o))
+        exp = '(\n    %s,\n)' % ',\n    '.join(map(str, o))
         for type in [tuple, tuple2]:
             act = pprint.pformat(type(o))
             self.assertEqual(pprint.pformat(type(o)), exp)
 
         # indent parameter
         o = range(100)
-        exp = '[\n    %s,\n]' % ',\n    '.join(map(str, o))
+        exp = '[\n %s,\n]' % ',\n '.join(map(str, o))
         for type in [list, list2]:
-            self.assertEqual(pprint.pformat(type(o), indent=4), exp)
+            self.assertEqual(pprint.pformat(type(o), indent=1), exp)
 
     def test_nested_indentations(self):
         o1 = list(range(10))
@@ -239,8 +239,8 @@ class QueryTestCase(unittest.TestCase):
              'others.should.not.be': 'like.this'}
         exp = """\
 {
- 'names with spaces': 'should be presented using repr()',
- others.should.not.be: like.this,
+    'names with spaces': 'should be presented using repr()',
+    others.should.not.be: like.this,
 }"""
         self.assertEqual(DottedPrettyPrinter().pformat(o), exp)
 
@@ -251,120 +251,120 @@ class QueryTestCase(unittest.TestCase):
         self.assertEqual(pprint.pformat(frozenset(range(3))), 'frozenset([0, 1, 2])')
         cube_repr_tgt = """\
 {
- frozenset([]): frozenset([frozenset([2]), frozenset([0]), frozenset([1])]),
- frozenset([0]): frozenset([
-  frozenset(),
-  frozenset([0, 2]),
-  frozenset([0, 1]),
- ]),
- frozenset([1]): frozenset([
-  frozenset(),
-  frozenset([1, 2]),
-  frozenset([0, 1]),
- ]),
- frozenset([2]): frozenset([
-  frozenset(),
-  frozenset([1, 2]),
-  frozenset([0, 2]),
- ]),
- frozenset([1, 2]): frozenset([
-  frozenset([2]),
-  frozenset([1]),
-  frozenset([0, 1, 2]),
- ]),
- frozenset([0, 2]): frozenset([
-  frozenset([2]),
-  frozenset([0]),
-  frozenset([0, 1, 2]),
- ]),
- frozenset([0, 1]): frozenset([
-  frozenset([0]),
-  frozenset([1]),
-  frozenset([0, 1, 2]),
- ]),
- frozenset([0, 1, 2]): frozenset([
-  frozenset([1, 2]),
-  frozenset([0, 2]),
-  frozenset([0, 1]),
- ]),
+    frozenset([]): frozenset([frozenset([2]), frozenset([0]), frozenset([1])]),
+    frozenset([0]): frozenset([
+        frozenset(),
+        frozenset([0, 2]),
+        frozenset([0, 1]),
+    ]),
+    frozenset([1]): frozenset([
+        frozenset(),
+        frozenset([1, 2]),
+        frozenset([0, 1]),
+    ]),
+    frozenset([2]): frozenset([
+        frozenset(),
+        frozenset([1, 2]),
+        frozenset([0, 2]),
+    ]),
+    frozenset([1, 2]): frozenset([
+        frozenset([2]),
+        frozenset([1]),
+        frozenset([0, 1, 2]),
+    ]),
+    frozenset([0, 2]): frozenset([
+        frozenset([2]),
+        frozenset([0]),
+        frozenset([0, 1, 2]),
+    ]),
+    frozenset([0, 1]): frozenset([
+        frozenset([0]),
+        frozenset([1]),
+        frozenset([0, 1, 2]),
+    ]),
+    frozenset([0, 1, 2]): frozenset([
+        frozenset([1, 2]),
+        frozenset([0, 2]),
+        frozenset([0, 1]),
+    ]),
 }"""
         my_cube = cube(3)
         actual = pprint.pformat(my_cube)
         self.assertEqual(actual, cube_repr_tgt)
         cubo_repr_tgt = """\
 {
- frozenset([frozenset([0, 2]), frozenset([0])]): frozenset([
-  frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 1])]),
-  frozenset([frozenset(), frozenset([0])]),
-  frozenset([frozenset([2]), frozenset([0, 2])]),
- ]),
- frozenset([frozenset([0, 1]), frozenset([1])]): frozenset([
-  frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 1])]),
-  frozenset([frozenset([1]), frozenset([1, 2])]),
-  frozenset([frozenset(), frozenset([1])]),
- ]),
- frozenset([frozenset([1, 2]), frozenset([1])]): frozenset([
-  frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([2]), frozenset([1, 2])]),
-  frozenset([frozenset(), frozenset([1])]),
-  frozenset([frozenset([1]), frozenset([0, 1])]),
- ]),
- frozenset([frozenset([1, 2]), frozenset([2])]): frozenset([
-  frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([1]), frozenset([1, 2])]),
-  frozenset([frozenset([2]), frozenset([0, 2])]),
-  frozenset([frozenset(), frozenset([2])]),
- ]),
- frozenset([frozenset([]), frozenset([0])]): frozenset([
-  frozenset([frozenset([0]), frozenset([0, 1])]),
-  frozenset([frozenset([0]), frozenset([0, 2])]),
-  frozenset([frozenset(), frozenset([1])]),
-  frozenset([frozenset(), frozenset([2])]),
- ]),
- frozenset([frozenset([]), frozenset([1])]): frozenset([
-  frozenset([frozenset(), frozenset([0])]),
-  frozenset([frozenset([1]), frozenset([1, 2])]),
-  frozenset([frozenset(), frozenset([2])]),
-  frozenset([frozenset([1]), frozenset([0, 1])]),
- ]),
- frozenset([frozenset([2]), frozenset([])]): frozenset([
-  frozenset([frozenset([2]), frozenset([1, 2])]),
-  frozenset([frozenset(), frozenset([0])]),
-  frozenset([frozenset(), frozenset([1])]),
-  frozenset([frozenset([2]), frozenset([0, 2])]),
- ]),
- frozenset([frozenset([0, 1, 2]), frozenset([0, 1])]): frozenset([
-  frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 1])]),
-  frozenset([frozenset([1]), frozenset([0, 1])]),
- ]),
- frozenset([frozenset([0]), frozenset([0, 1])]): frozenset([
-  frozenset([frozenset(), frozenset([0])]),
-  frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 2])]),
-  frozenset([frozenset([1]), frozenset([0, 1])]),
- ]),
- frozenset([frozenset([2]), frozenset([0, 2])]): frozenset([
-  frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([2]), frozenset([1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 2])]),
-  frozenset([frozenset(), frozenset([2])]),
- ]),
- frozenset([frozenset([0, 1, 2]), frozenset([0, 2])]): frozenset([
-  frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0]), frozenset([0, 2])]),
-  frozenset([frozenset([2]), frozenset([0, 2])]),
- ]),
- frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]): frozenset([
-  frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-  frozenset([frozenset([2]), frozenset([1, 2])]),
-  frozenset([frozenset([1]), frozenset([1, 2])]),
- ]),
+    frozenset([frozenset([0, 2]), frozenset([0])]): frozenset([
+        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 1])]),
+        frozenset([frozenset(), frozenset([0])]),
+        frozenset([frozenset([2]), frozenset([0, 2])]),
+    ]),
+    frozenset([frozenset([0, 1]), frozenset([1])]): frozenset([
+        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 1])]),
+        frozenset([frozenset([1]), frozenset([1, 2])]),
+        frozenset([frozenset(), frozenset([1])]),
+    ]),
+    frozenset([frozenset([1, 2]), frozenset([1])]): frozenset([
+        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([2]), frozenset([1, 2])]),
+        frozenset([frozenset(), frozenset([1])]),
+        frozenset([frozenset([1]), frozenset([0, 1])]),
+    ]),
+    frozenset([frozenset([1, 2]), frozenset([2])]): frozenset([
+        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([1]), frozenset([1, 2])]),
+        frozenset([frozenset([2]), frozenset([0, 2])]),
+        frozenset([frozenset(), frozenset([2])]),
+    ]),
+    frozenset([frozenset([]), frozenset([0])]): frozenset([
+        frozenset([frozenset([0]), frozenset([0, 1])]),
+        frozenset([frozenset([0]), frozenset([0, 2])]),
+        frozenset([frozenset(), frozenset([1])]),
+        frozenset([frozenset(), frozenset([2])]),
+    ]),
+    frozenset([frozenset([]), frozenset([1])]): frozenset([
+        frozenset([frozenset(), frozenset([0])]),
+        frozenset([frozenset([1]), frozenset([1, 2])]),
+        frozenset([frozenset(), frozenset([2])]),
+        frozenset([frozenset([1]), frozenset([0, 1])]),
+    ]),
+    frozenset([frozenset([2]), frozenset([])]): frozenset([
+        frozenset([frozenset([2]), frozenset([1, 2])]),
+        frozenset([frozenset(), frozenset([0])]),
+        frozenset([frozenset(), frozenset([1])]),
+        frozenset([frozenset([2]), frozenset([0, 2])]),
+    ]),
+    frozenset([frozenset([0, 1, 2]), frozenset([0, 1])]): frozenset([
+        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 1])]),
+        frozenset([frozenset([1]), frozenset([0, 1])]),
+    ]),
+    frozenset([frozenset([0]), frozenset([0, 1])]): frozenset([
+        frozenset([frozenset(), frozenset([0])]),
+        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 2])]),
+        frozenset([frozenset([1]), frozenset([0, 1])]),
+    ]),
+    frozenset([frozenset([2]), frozenset([0, 2])]): frozenset([
+        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([2]), frozenset([1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 2])]),
+        frozenset([frozenset(), frozenset([2])]),
+    ]),
+    frozenset([frozenset([0, 1, 2]), frozenset([0, 2])]): frozenset([
+        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0]), frozenset([0, 2])]),
+        frozenset([frozenset([2]), frozenset([0, 2])]),
+    ]),
+    frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]): frozenset([
+        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
+        frozenset([frozenset([2]), frozenset([1, 2])]),
+        frozenset([frozenset([1]), frozenset([1, 2])]),
+    ]),
 }"""
 
         cubo = linegraph(my_cube)
