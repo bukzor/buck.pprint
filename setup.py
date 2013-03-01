@@ -2,20 +2,21 @@
 
 from distutils.core import setup
 
-execfile('package/version.py')
+__version__ = None  # pyflakes
+execfile('pprint2/version.py')
 
 setup(
-    name = 'TODO: Enter a name',
+    name = 'pprint2',
     version = __version__,
-    description = 'TODO: Enter a description',
+    description = 'A fork of the stdlib pprint which uses standard indentation',
     long_description = open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
-    author = 'TODO: Enter your name',
-    author_email = 'TODO: Enter your e-mail address',
-    url = 'TODO: Enter an URL',
+    author = 'Buck Golemon',
+    author_email = 'buck.golemon@gmail.com',
+    url = '(TODO)',
     packages = [
-        'TODO: Enter package(s)'
+        'pprint2',
     ],
+	## 'TODO: Add trove classifiers (http://pypi.python.org/pypi?%3Aaction=list_classifiers)'
     classifiers = [
-        'TODO: Add trove classifiers (http://pypi.python.org/pypi?%3Aaction=list_classifiers)'
     ]
 )
