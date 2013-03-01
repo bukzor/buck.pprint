@@ -169,29 +169,34 @@ class QueryTestCase(unittest.TestCase):
              'read_io_runtime_us': 0,
              'write_io_runtime_us': 43690}
         exp = """\
-{'RPM_cal': 0,
+{
+ 'RPM_cal': 0,
  'RPM_cal2': 48059,
  'Speed_cal': 0,
  'controldesk_runtime_us': 0,
  'main_code_runtime_us': 0,
  'read_io_runtime_us': 0,
- 'write_io_runtime_us': 43690}"""
+ 'write_io_runtime_us': 43690,
+}"""
         for type in [dict, dict2]:
-            self.assertEqual(pprint.pformat(type(o)), exp)
+            act = pprint.pformat(type(o))
+            self.assertEqual(act , exp)
 
         o = range(100)
-        exp = '[%s]' % ',\n '.join(map(str, o))
+        exp = '[\n %s,\n]' % ',\n '.join(map(str, o))
         for type in [list, list2]:
-            self.assertEqual(pprint.pformat(type(o)), exp)
+            act = pprint.pformat(type(o))
+            self.assertEqual(act, exp)
 
-        o = tuple(range(100))
-        exp = '(%s)' % ',\n '.join(map(str, o))
+        o = tuple(range(30))
+        exp = '(\n %s,\n)' % ',\n '.join(map(str, o))
         for type in [tuple, tuple2]:
+            act = pprint.pformat(type(o))
             self.assertEqual(pprint.pformat(type(o)), exp)
 
         # indent parameter
         o = range(100)
-        exp = '[   %s]' % ',\n    '.join(map(str, o))
+        exp = '[\n    %s,\n]' % ',\n    '.join(map(str, o))
         for type in [list, list2]:
             self.assertEqual(pprint.pformat(type(o), indent=4), exp)
 
