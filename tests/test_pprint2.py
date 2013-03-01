@@ -238,8 +238,10 @@ class QueryTestCase(unittest.TestCase):
         o = {'names with spaces': 'should be presented using repr()',
              'others.should.not.be': 'like.this'}
         exp = """\
-{'names with spaces': 'should be presented using repr()',
- others.should.not.be: like.this}"""
+{
+ 'names with spaces': 'should be presented using repr()',
+ others.should.not.be: like.this,
+}"""
         self.assertEqual(DottedPrettyPrinter().pformat(o), exp)
 
     def test_set_reprs(self):
