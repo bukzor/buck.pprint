@@ -1,7 +1,5 @@
 import pprint
-import test.test_support
 import unittest
-import test.test_set
 
 try:
     uni = unicode
@@ -30,6 +28,35 @@ class dict2(dict):
 class dict3(dict):
     def __repr__(self):
         return dict.__repr__(self)
+
+def powerset(U):
+    """Generates all subsets of a set or sequence U."""
+    U = iter(U)
+    try:
+        x = frozenset([U.next()])
+        for S in powerset(U):
+            yield S
+            yield S | x
+    except StopIteration:
+        yield frozenset()
+
+def cube(n):
+    """Graph of n-dimensional hypercube."""
+    singletons = [frozenset([x]) for x in range(n)]
+    return dict([(x, frozenset([x^s for s in singletons]))
+                 for x in powerset(range(n))])
+
+def linegraph(G):
+    """Graph, the vertices of which are edges of G,
+    with two vertices being adjacent iff the corresponding
+    edges share a vertex."""
+    L = {}
+    for x in G:
+        for y in G[x]:
+            nx = [frozenset([x,z]) for z in G[x] if z != y]
+            ny = [frozenset([y,z]) for z in G[y] if z != x]
+            L[frozenset([x,y])] = frozenset(nx+ny)
+    return L
 
 class QueryTestCase(unittest.TestCase):
 
@@ -232,8 +259,8 @@ class QueryTestCase(unittest.TestCase):
  frozenset([0, 1, 2]): frozenset([frozenset([1, 2]),
                                   frozenset([0, 2]),
                                   frozenset([0, 1])])}"""
-        cube = test.test_set.cube(3)
-        self.assertEqual(pprint.pformat(cube), cube_repr_tgt)
+        my_cube = cube(3)
+        self.assertEqual(pprint.pformat(my_cube), cube_repr_tgt)
         cubo_repr_tgt = """\
 {frozenset([frozenset([0, 2]), frozenset([0])]): frozenset([frozenset([frozenset([0,
                                                                                   2]),
@@ -392,7 +419,7 @@ class QueryTestCase(unittest.TestCase):
                                                                              frozenset([1,
                                                                                         2])])])}"""
 
-        cubo = test.test_set.linegraph(cube)
+        cubo = linegraph(my_cube)
         self.assertEqual(pprint.pformat(cubo), cubo_repr_tgt)
 
     def test_depth(self):
@@ -424,9 +451,5 @@ class DottedPrettyPrinter(pprint.PrettyPrinter):
                 self, object, context, maxlevels, level)
 
 
-def test_main():
-    test.test_support.run_unittest(QueryTestCase)
-
-
-if __name__ == "__main__":
-    test_main()
+if __name__ == '__main__':
+    unittest.main()
