@@ -138,6 +138,20 @@ class PrettyPrinter:
         return readable and not recursive
 
     def _format(self, object, stream, indent, allowance, context, level):
+        """The core pretty-printing function.
+
+        Input:
+            object -- The value to be pretty-printed.
+            stream -- The file-like output of this pretty-print.
+        
+        State variables, used in recursion:
+            indent -- The "current" indentation level, as an integer count of columns.
+            allowance -- No clue what this is... It seems to be roughly equal to `level`.
+            context -- The set of all nested objects above this one, used for
+                cycle detection.
+            level -- The count of how many objects are nested "above" this one.
+                This is used in implementing the "depth" feature of PrettyPrinter.
+        """
         level = level + 1
         objid = _id(object)
         if objid in context:
@@ -147,7 +161,7 @@ class PrettyPrinter:
             return
         rep = self._repr(object, context, level - 1)
         typ = _type(object)
-        sepLines = _len(rep) > (self._width - 1 - indent - allowance)
+        sepLines = _len(rep) + indent + allowance >= self._width
         write = stream.write
 
         if self._depth and level > self._depth:
@@ -157,8 +171,8 @@ class PrettyPrinter:
         r = getattr(typ, "__repr__", None)
         if issubclass(typ, dict) and r is dict.__repr__:
             write('{')
-            if self._indent_per_level > 1:
-                write((self._indent_per_level - 1) * ' ')
+            if sepLines:
+                write('\n' + (indent + self._indent_per_level) * ' ')
             length = _len(object)
             if length:
                 context[objid] = 1
@@ -168,8 +182,7 @@ class PrettyPrinter:
                 rep = self._repr(key, context, level)
                 write(rep)
                 write(': ')
-                self._format(ent, stream, indent + _len(rep) + 2,
-                              allowance + 1, context, level)
+                self._format(ent, stream, indent + _len(rep) + 2, allowance + 1, context, level)
                 if length > 1:
                     for key, ent in items[1:]:
                         rep = self._repr(key, context, level)
@@ -177,10 +190,11 @@ class PrettyPrinter:
                             write(',\n%s%s: ' % (' '*indent, rep))
                         else:
                             write(', %s: ' % rep)
-                        self._format(ent, stream, indent + _len(rep) + 2,
-                                      allowance + 1, context, level)
+                        self._format(ent, stream, indent + _len(rep) + 2, allowance + 1, context, level)
                 indent = indent - self._indent_per_level
                 del context[objid]
+            if sepLines:
+                write(',\n' + indent * ' ')
             write('}')
             return
 
@@ -212,24 +226,24 @@ class PrettyPrinter:
             else:
                 write('(')
                 endchar = ')'
-            if self._indent_per_level > 1 and sepLines:
-                write((self._indent_per_level - 1) * ' ')
+            if sepLines:
+                write('\n' + (indent + self._indent_per_level) * ' ')
             if length:
                 context[objid] = 1
                 indent = indent + self._indent_per_level
-                self._format(object[0], stream, indent, allowance + 1,
-                             context, level)
+                self._format(object[0], stream, indent, allowance + 1, context, level)
                 if length > 1:
                     for ent in object[1:]:
                         if sepLines:
                             write(',\n' + ' '*indent)
                         else:
                             write(', ')
-                        self._format(ent, stream, indent,
-                                      allowance + 1, context, level)
+                        self._format(ent, stream, indent, allowance + 1, context, level)
                 indent = indent - self._indent_per_level
                 del context[objid]
-            if issubclass(typ, tuple) and length == 1:
+            if sepLines:
+                write(',\n' + indent * ' ')
+            elif issubclass(typ, tuple) and length == 1:
                 write(',')
             write(endchar)
             return
@@ -359,3 +373,4 @@ def _perfcheck(object=None):
 
 if __name__ == "__main__":
     _perfcheck()
+# vim:et:sts=4:sw=4:

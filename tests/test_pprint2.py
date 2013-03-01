@@ -1,4 +1,5 @@
-import pprint
+# Simplify merging from upstream: use the old name.
+import pprint2 as pprint
 import unittest
 
 try:
@@ -199,11 +200,16 @@ class QueryTestCase(unittest.TestCase):
         o2 = dict(first=1, second=2, third=3)
         o = [o1, o2]
         expected = """\
-[   [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    {   'first': 1,
+[
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    {
+        'first': 1,
         'second': 2,
-        'third': 3}]"""
-        self.assertEqual(pprint.pformat(o, indent=4, width=42), expected)
+        'third': 3,
+    },
+]"""
+        actual = pprint.pformat(o, indent=4, width=42)
+        self.assertEqual(actual, expected)
 
     def test_sorted_dict(self):
         # Starting in Python 2.5, pprint sorts dict displays by key regardless
@@ -453,3 +459,4 @@ class DottedPrettyPrinter(pprint.PrettyPrinter):
 
 if __name__ == '__main__':
     unittest.main()
+# vim:et:sts=4:sw=4:
