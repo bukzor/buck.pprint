@@ -146,7 +146,9 @@ class PrettyPrinter:
         
         State variables, used in recursion:
             indent -- The "current" indentation level, as an integer count of columns.
-            allowance -- No clue what this is... It seems to be roughly equal to `level`.
+            allowance -- The number of columns already "used up" on the current line,
+                not counting indentation.  It seems that this value was totally broken
+                in stdlib cpython pprint.
             context -- The set of all nested objects above this one, used for
                 cycle detection.
             level -- The count of how many objects are nested "above" this one.
@@ -154,51 +156,64 @@ class PrettyPrinter:
         """
         level = level + 1
         objid = _id(object)
+        write = stream.write
         if objid in context:
-            stream.write(_recursion(object))
+            rep = _recursion(object)
+            write(rep)
+            replen = _len(rep)
+            allowance += rep
             self._recursive = True
             self._readable = False
-            return
+            return allowance
         rep = self._repr(object, context, level - 1)
         typ = _type(object)
-        sepLines = _len(rep) + indent + allowance >= self._width
-        write = stream.write
+        sepLines = _len(rep) + indent + allowance + 1 >= self._width
 
         if self._depth and level > self._depth:
             write(rep)
-            return
+            replen = _len(rep)
+            return allowance + replen
 
         r = getattr(typ, "__repr__", None)
         if issubclass(typ, dict) and r is dict.__repr__:
             write('{')
+            allowance += 1
             if sepLines:
                 write('\n' + (indent + self._indent_per_level) * ' ')
+                allowance = 0
             length = _len(object)
             if length:
                 context[objid] = 1
-                indent = indent + self._indent_per_level
+                indent += self._indent_per_level
                 items = _sorted(object.items())
                 key, ent = items[0]
                 rep = self._repr(key, context, level)
                 write(rep)
                 write(': ')
-                self._format(ent, stream, indent + _len(rep) + 2, allowance + 1, context, level)
+                replen = _len(rep)
+                allowance += replen + 2
+                allowance = self._format(ent, stream, indent, allowance, context, level)
                 if length > 1:
                     for key, ent in items[1:]:
                         rep = self._repr(key, context, level)
+                        replen = _len(rep)
                         if sepLines:
                             write(',\n%s%s: ' % (' '*indent, rep))
+                            allowance = replen + 2
                         else:
                             write(', %s: ' % rep)
-                        self._format(ent, stream, indent + _len(rep) + 2, allowance + 1, context, level)
-                indent = indent - self._indent_per_level
+                            allowance += replen + 4
+                        allowance = self._format(ent, stream, indent, allowance, context, level)
+                indent -= self._indent_per_level
                 del context[objid]
             if sepLines:
                 write(',\n' + indent * ' ')
+                allowance = 0
             write('}')
-            return
+            allowance += 1
+            return allowance
 
-        if ((issubclass(typ, list) and r is list.__repr__) or
+        elif ((issubclass(typ, list) and r is list.__repr__) or
             (issubclass(typ, tuple) and r is tuple.__repr__) or
             (issubclass(typ, set) and r is set.__repr__) or
             (issubclass(typ, frozenset) and r is frozenset.__repr__)
@@ -206,49 +221,57 @@ class PrettyPrinter:
             length = _len(object)
             if issubclass(typ, list):
                 write('[')
+                allowance += 1
                 endchar = ']'
             elif issubclass(typ, set):
                 if not length:
                     write('set()')
-                    return
+                    return allowance + 5
                 write('set([')
+                allowance += 5
                 endchar = '])'
                 object = _sorted(object)
-                indent += 4
             elif issubclass(typ, frozenset):
                 if not length:
                     write('frozenset()')
-                    return
+                    return allowance + 11
                 write('frozenset([')
+                allowance += 11
                 endchar = '])'
                 object = _sorted(object)
-                indent += 10
             else:
                 write('(')
+                allowance += 1
                 endchar = ')'
             if sepLines:
                 write('\n' + (indent + self._indent_per_level) * ' ')
+                allowance = 0
             if length:
                 context[objid] = 1
                 indent = indent + self._indent_per_level
-                self._format(object[0], stream, indent, allowance + 1, context, level)
+                allowance = self._format(object[0], stream, indent, allowance, context, level)
                 if length > 1:
                     for ent in object[1:]:
                         if sepLines:
                             write(',\n' + ' '*indent)
+                            allowance = 0
                         else:
                             write(', ')
-                        self._format(ent, stream, indent, allowance + 1, context, level)
+                            allowance += 2
+                        allowance = self._format(ent, stream, indent, allowance, context, level)
                 indent = indent - self._indent_per_level
                 del context[objid]
             if sepLines:
                 write(',\n' + indent * ' ')
+                allowance = 0
             elif issubclass(typ, tuple) and length == 1:
                 write(',')
+                allowance += 1
             write(endchar)
-            return
+            return allowance
 
         write(rep)
+        return allowance
 
     def _repr(self, object, context, level):
         repr, readable, recursive = self.format(object, context.copy(),
