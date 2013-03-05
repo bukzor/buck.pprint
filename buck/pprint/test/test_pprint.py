@@ -1,5 +1,5 @@
 # Simplify merging from upstream: use the old name.
-import pprint2 as pprint
+import buck.pprint as pprint
 import unittest
 
 try:

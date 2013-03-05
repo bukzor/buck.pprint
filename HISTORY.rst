@@ -1,7 +1,7 @@
 History
 -------
 
-0.0.0
+0.0
 +++++
 
-* Nothing
+2013-03-28 -- Initial release.
