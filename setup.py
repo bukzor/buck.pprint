@@ -3,6 +3,10 @@
 from setuptools import setup
 
 __version__ = None  # pyflakes
+
+def execfile(path):
+    exec(open(path).read())
+
 execfile('buck/pprint/version.py')
 
 setup(
