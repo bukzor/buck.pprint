@@ -188,8 +188,7 @@ class PrettyPrinter:
             return allowance
         rep = self._repr(object, context, level)
         replen = len(rep)
-        sepLines = replen + indent + allowance >= self._width
-        if sepLines:
+        if replen + indent + allowance >= self._width:
             p = self._dispatch.get(type(object).__repr__, None)
             if p is not None:
                 context[objid] = 1
@@ -211,11 +210,14 @@ class PrettyPrinter:
     def _pprint_dict(self, object, stream, indent, allowance, context, level):
         write = stream.write
         write('{')
-        write('\n' + indent * ' ')
         length = len(object)
         if length:
+            if length > 1 or not self._compact:
+                indent += self._indent_per_level
+                write('\n' + indent * ' ')
+                allowance = 0
             items = sorted(object.items(), key=_safe_tuple)
-            allowance = self._format_dict_items(items, stream, indent, 0,
+            allowance = self._format_dict_items(items, stream, indent, allowance,
                                     context, level)
         write('}')
         allowance += 1
@@ -274,10 +276,11 @@ class PrettyPrinter:
             allowance += len(typ.__name__) + 2
             endchar = '})'
         object = sorted(object, key=_safe_key)
-        self._format_items(object, stream, indent, allowance,
+        allowance = self._format_items(object, stream, indent, allowance,
                            context, level)
         stream.write(endchar)
         allowance += len(endchar)
+        return allowance
 
     _dispatch[set.__repr__] = _pprint_set
     _dispatch[frozenset.__repr__] = _pprint_set
@@ -302,13 +305,10 @@ class PrettyPrinter:
                 assert parts
                 assert not parts[-1]
                 parts.pop()  # drop empty last part
-                max_width2 = max_width
                 current = ''
                 for j, part in enumerate(parts):
                     candidate = current + part
-                    if j == len(parts) - 1 and i == len(lines) - 1:
-                        max_width2 -= allowance
-                    if len(repr(candidate)) > max_width2:
+                    if len(repr(candidate)) >= max_width:
                         if current:
                             chunks.append(repr(current))
                         current = part
@@ -320,17 +320,14 @@ class PrettyPrinter:
             write(rep)
             replen = len(rep)
             return allowance + replen
-        if level == 1:
-            write('(')
-            allowance += 1
+        write('(')
         for i, rep in enumerate(chunks):
             write('\n' + ' '*indent)
             write(rep)
-            allowance = len(rep)
-        if level == 1:
-            write('\n')
-            write(')')
-            allowance = 1
+        indent -= self._indent_per_level
+        write('\n' + ' '*indent)
+        write(')')
+        allowance = 1
         return allowance
 
     _dispatch[str.__repr__] = _pprint_str
@@ -391,11 +388,12 @@ class PrettyPrinter:
             replen = len(rep)
             allowance += replen + 2
             allowance = self._format(ent, stream, indent, allowance, context, level)
-            if last:
-                write(',\n')
-            else:
+            if not last:
                 write(delimnl)
-            allowance = 0
+                allowance = 0
+            elif i > 0 or not self._compact:
+                write(',\n')
+                allowance = 0
         return allowance
 
     def _format_items(self, items, stream, indent, allowance, context, level):
@@ -513,17 +511,17 @@ class PrettyPrinter:
     _dispatch[_collections.deque.__repr__] = _pprint_deque
 
     def _pprint_user_dict(self, object, stream, indent, allowance, context, level):
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+        return self._format(object.data, stream, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserDict.__repr__] = _pprint_user_dict
 
     def _pprint_user_list(self, object, stream, indent, allowance, context, level):
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+        return self._format(object.data, stream, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserList.__repr__] = _pprint_user_list
 
     def _pprint_user_string(self, object, stream, indent, allowance, context, level):
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+        return self._format(object.data, stream, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserString.__repr__] = _pprint_user_string
 

@@ -957,20 +957,38 @@ deque([('brown', 2),
         d = collections.UserString('')
         self.assertEqual(pprint.pformat(d, width=1), "''")
         d = collections.UserString('the quick brown fox jumped over a lazy dog')
-        self.assertEqual(pprint.pformat(d, width=20),
+        self.assertEqual(pprint.pformat(d, width=20) + '\n',
 """\
 (
     'the quick '
     'brown fox '
     'jumped over '
     'a lazy dog'
-)""")
-        self.assertEqual(pprint.pformat({1: d}, width=20),
+)
+""")
+        self.assertEqual(pprint.pformat({1: d}, width=20) + '\n',
 """\
-{1: 'the quick '
+{
+    1: (
+        'the '
+        'quick '
+        'brown '
+        'fox '
+        'jumped '
+        'over a '
+        'lazy dog'
+    ),
+}
+""")
+        self.assertEqual(pprint.pformat({1: d}, width=20, compact=True) + '\n',
+"""\
+{1: (
+    'the quick '
     'brown fox '
-    'jumped over a '
-    'lazy dog'}""")
+    'jumped over '
+    'a lazy dog'
+)}
+""")
 
 
 class DottedPrettyPrinter(pprint.PrettyPrinter):
