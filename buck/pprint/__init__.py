@@ -212,13 +212,17 @@ class PrettyPrinter:
         write('{')
         length = len(object)
         if length:
-            if length > 1 or not self._compact:
+            multibracket = length <= 1
+            if not multibracket:
                 indent += self._indent_per_level
                 write('\n' + indent * ' ')
                 allowance = 0
             items = sorted(object.items(), key=_safe_tuple)
             allowance = self._format_dict_items(items, stream, indent, allowance,
                                     context, level)
+            if not multibracket:
+                indent -= self._indent_per_level
+                write(indent * ' ')
         write('}')
         allowance += 1
         return allowance
@@ -234,7 +238,7 @@ class PrettyPrinter:
         stream.write(cls.__name__ + '(')
         allowance = len(cls.__name__) + 1
         allowance = self._format(list(object.items()), stream,
-                     indent + self._indent_per_level, allowance,
+                     indent, allowance + 1,
                      context, level)
         stream.write(')')
         return allowance + 1
@@ -253,9 +257,12 @@ class PrettyPrinter:
     def _pprint_tuple(self, object, stream, indent, allowance, context, level):
         stream.write('(')
         allowance += 1
-        endchar = ',)' if len(object) == 1 else ')'
         allowance = self._format_items(object, stream, indent, allowance,
                            context, level)
+        if len(object) == 1 and allowance != 0:
+            endchar = ',)'
+        else:
+            endchar = ')'
         stream.write(endchar)
         return allowance + len(endchar)
 
@@ -338,28 +345,24 @@ class PrettyPrinter:
             rep = repr(object)
             write(rep)
             return allowance + len(rep)
-        parens = level == 1
-        if parens:
-            write('(')
-            allowance += 1
-        delim = ''
-        for rep in _wrap_bytes_repr(object, self._width - indent, allowance):
-            write(delim)
+        write('(')
+        allowance += 1
+        indent += self._indent_per_level
+        for rep in _wrap_bytes_repr(object, self._width - indent, 1):
+            write('\n' + ' '*indent)
             write(rep)
-            allowance += len(rep)
-            if not delim:
-                delim = '\n' + ' '*indent
-                allowance = 0
-        if parens:
-            write(')')
-            allowance += 1
+            allowance = len(rep)
+        indent -= self._indent_per_level
+        write('\n' + ' '*indent)
+        write(')')
+        return 1
 
     _dispatch[bytes.__repr__] = _pprint_bytes
 
     def _pprint_bytearray(self, object, stream, indent, allowance, context, level):
         write = stream.write
         write('bytearray(')
-        allowance = self._pprint_bytes(bytes(object), stream, indent + self._indent_per_level,
+        allowance = self._pprint_bytes(bytes(object), stream, indent,
                            allowance + 10, context, level + 1)
         write(')')
         return allowance + 1
@@ -368,7 +371,7 @@ class PrettyPrinter:
 
     def _pprint_mappingproxy(self, object, stream, indent, allowance, context, level):
         stream.write('mappingproxy(')
-        allowance = self._format(object.copy(), stream, indent + self._indent_per_level, allowance + 13,
+        allowance = self._format(object.copy(), stream, indent, allowance + 13,
                      context, level)
         stream.write(')')
         return allowance + 1
@@ -391,35 +394,32 @@ class PrettyPrinter:
             if not last:
                 write(delimnl)
                 allowance = 0
-            elif i > 0 or not self._compact:
+            elif i > 0:
                 write(',\n')
                 allowance = 0
         return allowance
 
     def _format_items(self, items, stream, indent, allowance, context, level):
         write = stream.write
-        write('\n')
-        allowance = 0
-        delim = ',\n'
+        length = len(items)
+        multibracket = length <= 1
+        if not multibracket:
+            indent += self._indent_per_level
+            write('\n')
+            allowance = 0
         width = max_width = self._width - indent + 1
         for ent in items:
-            if self._compact:
-                rep = self._repr(ent, context, level)
-                w = len(rep) + 2
-                if width < w:
-                    width = max_width
-                if width >= w:
-                    width -= w
-                    write(delim)
-                    allowance = delim_allowance
-                    delim = ', '
-                    delim_allowance = allowance + 2
-                    write(rep)
-                    allowance += len(rep)
-                    continue
-            write(' ' * indent)
+            if not multibracket:
+                write(' ' * indent)
+                allowance += 1  # for the coming comma
             self._format(ent, stream, indent, allowance, context, level)
-            write(delim)
+            if not multibracket:
+                write(',\n')
+                allowance = 0
+        if not multibracket:
+            indent -= self._indent_per_level
+            write(' ' * indent)
+            allowance = 0
         return allowance
 
     def _repr(self, object, context, level):
@@ -445,10 +445,12 @@ class PrettyPrinter:
             return allowance + len(rep)
         rdf = self._repr(object.default_factory, context, level)
         cls = object.__class__
-        indent += len(cls.__name__) + 1
-        stream.write('%s(%s,\n%s' % (cls.__name__, rdf, ' ' * indent))
+        indent += self._indent_per_level
+        stream.write('%s(\n%s%s,\n' % (cls.__name__, ' ' * indent, rdf))
+        stream.write(' ' * indent)
         allowance = self._pprint_dict(object, stream, indent, 0, context, level)
-        stream.write(')')
+        indent -= self._indent_per_level
+        stream.write(',\n%s)' % (' ' * indent))
         return allowance + 1
 
     _dispatch[_collections.defaultdict.__repr__] = _pprint_default_dict
@@ -461,15 +463,13 @@ class PrettyPrinter:
         cls = object.__class__
         stream.write(cls.__name__ + '({')
         indent += self._indent_per_level
-        write('\n' + indent * ' ')
-        allowance = 0
+        stream.write('\n' + ' ' * indent)
         items = object.most_common()
         allowance = self._format_dict_items(items, stream,
-                                indent + len(cls.__name__) + 1, allowance + 2,
+                                indent, allowance + 2,
                                 context, level)
         stream.write('})')
-        allowance += 2
-        return allowance
+        return allowance + 2
 
     _dispatch[_collections.Counter.__repr__] = _pprint_counter
 
@@ -478,15 +478,17 @@ class PrettyPrinter:
             stream.write(repr(object))
             return
         cls = object.__class__
-        stream.write(cls.__name__ + '(')
-        indent += len(cls.__name__) + 1
-        for i, m in enumerate(object.maps):
-            if i == len(object.maps) - 1:
-                self._format(m, stream, indent, allowance + 1, context, level)
-                stream.write(')')
-            else:
-                self._format(m, stream, indent, 1, context, level)
-                stream.write(',\n' + ' ' * indent)
+        stream.write(cls.__name__)
+        allowance += len(cls.__name__)
+        if len(object.maps) == 1:
+            stream.write('(')
+            allowance = self._format(object.maps[0], stream, indent, allowance + 2, context, level)
+            stream.write(')')
+            return allowance
+        else:
+            return self._pprint_tuple(object.maps, stream, indent, allowance, context, level)
+
+        return 1
 
     _dispatch[_collections.ChainMap.__repr__] = _pprint_chain_map
 
@@ -496,17 +498,20 @@ class PrettyPrinter:
             return
         cls = object.__class__
         stream.write(cls.__name__ + '(')
-        indent += len(cls.__name__) + 1
-        stream.write('[')
         if object.maxlen is None:
+            stream.write('[')
             self._format_items(object, stream, indent, allowance + 2,
                                context, level)
             stream.write('])')
         else:
-            self._format_items(object, stream, indent, 2,
-                               context, level)
+            indent += self._indent_per_level
+            stream.write('\n' + ' ' * indent + '[')
+            self._format_items(object, stream, indent, 1, context, level)
             rml = self._repr(object.maxlen, context, level)
-            stream.write('],\n%smaxlen=%s)' % (' ' * indent, rml))
+            stream.write('],\n%smaxlen=%s,\n' % (' ' * indent, rml))
+            indent -= self._indent_per_level
+            stream.write(' ' * indent + ')')
+
 
     _dispatch[_collections.deque.__repr__] = _pprint_deque
 
