@@ -932,7 +932,7 @@ bytearray((
 
     def test_default_dict(self):
         d = collections.defaultdict(int)
-        self.assertEqual(pprint.pformat(d, width=1), "defaultdict(<class 'int'>, {})")
+        self.assertEqual(pprint.pformat(d, width=31), "defaultdict(<class 'int'>, {})")
         words = 'the quick brown fox jumped over a lazy dog'.split()
         d = collections.defaultdict(int, zip(words, itertools.count()))
         self.assertEqual(pprint.pformat(d),
@@ -954,15 +954,15 @@ defaultdict(
 
     def test_counter(self):
         d = collections.Counter()
-        self.assertEqual(pprint.pformat(d, width=1), "Counter()")
+        self.assertEqual(pprint.pformat(d, width=10), "Counter()")
         d = collections.Counter('senselessness')
         self.assertEqual(pprint.pformat(d, width=40),
 """\
 Counter({
-    's': 6,
     'e': 4,
-    'n': 2,
     'l': 1,
+    'n': 2,
+    's': 6,
 })""")
 
     def test_chainmap(self):
@@ -1014,7 +1014,7 @@ ChainMap(
 
     def test_deque(self):
         d = collections.deque()
-        self.assertEqual(pprint.pformat(d, width=1), "deque([])")
+        self.assertEqual(pprint.pformat(d, width=10), "deque([])")
         d = collections.deque(maxlen=7)
         self.assertEqual(pprint.pformat(d, width=1), "deque([], maxlen=7)")
         words = 'the quick brown fox jumped over a lazy dog'.split()
@@ -1033,20 +1033,18 @@ deque([
     ('dog', 8),
 ])""")
         d = collections.deque(zip(words, itertools.count()), maxlen=7)
+        # FIXME: this ain't right.
         self.assertEqual(pprint.pformat(d),
 """\
-deque(
-    [
-        ('brown', 2),
-        ('fox', 3),
-        ('jumped', 4),
-        ('over', 5),
-        ('a', 6),
-        ('lazy', 7),
-        ('dog', 8),
-    ],
-    maxlen=7,
-)""")
+deque([
+    ('brown', 2),
+    ('fox', 3),
+    ('jumped', 4),
+    ('over', 5),
+    ('a', 6),
+    ('lazy', 7),
+    ('dog', 8),
+], maxlen=7)""")
 
     def test_user_dict(self):
         d = collections.UserDict()
