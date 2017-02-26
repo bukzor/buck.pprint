@@ -48,7 +48,7 @@ def powerset(U):
     """Generates all subsets of a set or sequence U."""
     U = iter(U)
     try:
-        x = frozenset([U.next()])
+        x = frozenset([next(U)])
         for S in powerset(U):
             yield S
             yield S | x
@@ -478,140 +478,143 @@ frozenset2({
         # compares the pretty-printed repr against a string hard-coded in
         # the test.  The hard-coded repr depends on the sort order of
         # frozensets.
-        #
-        # However, as the docs point out: "Since sets only define
-        # partial ordering (subset relationships), the output of the
-        # list.sort() method is undefined for lists of sets."
-        #
-        # In a nutshell, the test assumes frozenset({0}) will always
-        # sort before frozenset({1}), but:
-        #
-        # >>> frozenset({0}) < frozenset({1})
-        # False
-        # >>> frozenset({1}) < frozenset({0})
-        # False
-        #
-        # Consequently, this test is fragile and
-        # implementation-dependent.  Small changes to Python's sort
-        # algorithm cause the test to fail when it should pass.
-        # XXX Or changes to the dictionary implmentation...
+        obj = frozenset({frozenset({0}), frozenset({1}), frozenset({2})})
+        expected = '''\
+frozenset({frozenset({0}), frozenset({1}), frozenset({2})})'''
+        actual = pprint.pformat(obj)
+        self.assertEqual(actual, expected)
 
         cube_repr_tgt = """\
 {
-    frozenset([]): frozenset([frozenset([2]), frozenset([0]), frozenset([1])]),
-    frozenset([0]): frozenset([
+    frozenset(): frozenset({frozenset({0}), frozenset({1}), frozenset({2})}),
+    frozenset({0}): frozenset({
         frozenset(),
-        frozenset([0, 2]),
-        frozenset([0, 1]),
-    ]),
-    frozenset([1]): frozenset([
+        frozenset({0, 1}),
+        frozenset({0, 2}),
+    }),
+    frozenset({1}): frozenset({
         frozenset(),
-        frozenset([1, 2]),
-        frozenset([0, 1]),
-    ]),
-    frozenset([2]): frozenset([
+        frozenset({0, 1}),
+        frozenset({1, 2}),
+    }),
+    frozenset({2}): frozenset({
         frozenset(),
-        frozenset([1, 2]),
-        frozenset([0, 2]),
-    ]),
-    frozenset([1, 2]): frozenset([
-        frozenset([2]),
-        frozenset([1]),
-        frozenset([0, 1, 2]),
-    ]),
-    frozenset([0, 2]): frozenset([
-        frozenset([2]),
-        frozenset([0]),
-        frozenset([0, 1, 2]),
-    ]),
-    frozenset([0, 1]): frozenset([
-        frozenset([0]),
-        frozenset([1]),
-        frozenset([0, 1, 2]),
-    ]),
-    frozenset([0, 1, 2]): frozenset([
-        frozenset([1, 2]),
-        frozenset([0, 2]),
-        frozenset([0, 1]),
-    ]),
+        frozenset({0, 2}),
+        frozenset({1, 2}),
+    }),
+    frozenset({0, 1}): frozenset({
+        frozenset({0}),
+        frozenset({1}),
+        frozenset({0, 1, 2}),
+    }),
+    frozenset({0, 2}): frozenset({
+        frozenset({0}),
+        frozenset({2}),
+        frozenset({0, 1, 2}),
+    }),
+    frozenset({1, 2}): frozenset({
+        frozenset({1}),
+        frozenset({2}),
+        frozenset({0, 1, 2}),
+    }),
+    frozenset({0, 1, 2}): frozenset({
+        frozenset({0, 1}),
+        frozenset({0, 2}),
+        frozenset({1, 2}),
+    }),
 }"""
+        obj = {
+            frozenset({frozenset(), frozenset({2})}): None,
+            frozenset({frozenset(), frozenset({1})}): None,
+            frozenset({frozenset(), frozenset({0})}): None,
+        }
+        expected = '''\
+{
+    frozenset({frozenset(), frozenset({0})}): None,
+    frozenset({frozenset(), frozenset({1})}): None,
+    frozenset({frozenset(), frozenset({2})}): None,
+}'''
+        actual = pprint.pformat(obj)
+        self.assertEqual(actual, expected)
+        
+
         my_cube = cube(3)
         actual = pprint.pformat(my_cube)
         self.assertEqual(actual, cube_repr_tgt)
         cubo_repr_tgt = """\
 {
-    frozenset([frozenset([0, 2]), frozenset([0])]): frozenset([
-        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 1])]),
-        frozenset([frozenset(), frozenset([0])]),
-        frozenset([frozenset([2]), frozenset([0, 2])]),
-    ]),
-    frozenset([frozenset([0, 1]), frozenset([1])]): frozenset([
-        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 1])]),
-        frozenset([frozenset([1]), frozenset([1, 2])]),
-        frozenset([frozenset(), frozenset([1])]),
-    ]),
-    frozenset([frozenset([1, 2]), frozenset([1])]): frozenset([
-        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([2]), frozenset([1, 2])]),
-        frozenset([frozenset(), frozenset([1])]),
-        frozenset([frozenset([1]), frozenset([0, 1])]),
-    ]),
-    frozenset([frozenset([1, 2]), frozenset([2])]): frozenset([
-        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([1]), frozenset([1, 2])]),
-        frozenset([frozenset([2]), frozenset([0, 2])]),
-        frozenset([frozenset(), frozenset([2])]),
-    ]),
-    frozenset([frozenset([]), frozenset([0])]): frozenset([
-        frozenset([frozenset([0]), frozenset([0, 1])]),
-        frozenset([frozenset([0]), frozenset([0, 2])]),
-        frozenset([frozenset(), frozenset([1])]),
-        frozenset([frozenset(), frozenset([2])]),
-    ]),
-    frozenset([frozenset([]), frozenset([1])]): frozenset([
-        frozenset([frozenset(), frozenset([0])]),
-        frozenset([frozenset([1]), frozenset([1, 2])]),
-        frozenset([frozenset(), frozenset([2])]),
-        frozenset([frozenset([1]), frozenset([0, 1])]),
-    ]),
-    frozenset([frozenset([2]), frozenset([])]): frozenset([
-        frozenset([frozenset([2]), frozenset([1, 2])]),
-        frozenset([frozenset(), frozenset([0])]),
-        frozenset([frozenset(), frozenset([1])]),
-        frozenset([frozenset([2]), frozenset([0, 2])]),
-    ]),
-    frozenset([frozenset([0, 1, 2]), frozenset([0, 1])]): frozenset([
-        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 1])]),
-        frozenset([frozenset([1]), frozenset([0, 1])]),
-    ]),
-    frozenset([frozenset([0]), frozenset([0, 1])]): frozenset([
-        frozenset([frozenset(), frozenset([0])]),
-        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 2])]),
-        frozenset([frozenset([1]), frozenset([0, 1])]),
-    ]),
-    frozenset([frozenset([2]), frozenset([0, 2])]): frozenset([
-        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([2]), frozenset([1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 2])]),
-        frozenset([frozenset(), frozenset([2])]),
-    ]),
-    frozenset([frozenset([0, 1, 2]), frozenset([0, 2])]): frozenset([
-        frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0]), frozenset([0, 2])]),
-        frozenset([frozenset([2]), frozenset([0, 2])]),
-    ]),
-    frozenset([frozenset([1, 2]), frozenset([0, 1, 2])]): frozenset([
-        frozenset([frozenset([0, 2]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([0, 1]), frozenset([0, 1, 2])]),
-        frozenset([frozenset([2]), frozenset([1, 2])]),
-        frozenset([frozenset([1]), frozenset([1, 2])]),
-    ]),
+    frozenset({frozenset(), frozenset({0})}): frozenset({
+        frozenset({frozenset(), frozenset({1})}),
+        frozenset({frozenset(), frozenset({2})}),
+        frozenset({frozenset({0}), frozenset({0, 1})}),
+        frozenset({frozenset({0}), frozenset({0, 2})}),
+    }),
+    frozenset({frozenset(), frozenset({1})}): frozenset({
+        frozenset({frozenset(), frozenset({0})}),
+        frozenset({frozenset(), frozenset({2})}),
+        frozenset({frozenset({1}), frozenset({0, 1})}),
+        frozenset({frozenset({1}), frozenset({1, 2})}),
+    }),
+    frozenset({frozenset(), frozenset({2})}): frozenset({
+        frozenset({frozenset(), frozenset({0})}),
+        frozenset({frozenset(), frozenset({1})}),
+        frozenset({frozenset({2}), frozenset({0, 2})}),
+        frozenset({frozenset({2}), frozenset({1, 2})}),
+    }),
+    frozenset({frozenset({0}), frozenset({0, 1})}): frozenset({
+        frozenset({frozenset(), frozenset({0})}),
+        frozenset({frozenset({0}), frozenset({0, 2})}),
+        frozenset({frozenset({1}), frozenset({0, 1})}),
+        frozenset({frozenset({0, 1}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({0}), frozenset({0, 2})}): frozenset({
+        frozenset({frozenset(), frozenset({0})}),
+        frozenset({frozenset({0}), frozenset({0, 1})}),
+        frozenset({frozenset({2}), frozenset({0, 2})}),
+        frozenset({frozenset({0, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({1}), frozenset({0, 1})}): frozenset({
+        frozenset({frozenset(), frozenset({1})}),
+        frozenset({frozenset({0}), frozenset({0, 1})}),
+        frozenset({frozenset({1}), frozenset({1, 2})}),
+        frozenset({frozenset({0, 1}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({1}), frozenset({1, 2})}): frozenset({
+        frozenset({frozenset(), frozenset({1})}),
+        frozenset({frozenset({1}), frozenset({0, 1})}),
+        frozenset({frozenset({2}), frozenset({1, 2})}),
+        frozenset({frozenset({1, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({2}), frozenset({0, 2})}): frozenset({
+        frozenset({frozenset(), frozenset({2})}),
+        frozenset({frozenset({0}), frozenset({0, 2})}),
+        frozenset({frozenset({2}), frozenset({1, 2})}),
+        frozenset({frozenset({0, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({2}), frozenset({1, 2})}): frozenset({
+        frozenset({frozenset(), frozenset({2})}),
+        frozenset({frozenset({1}), frozenset({1, 2})}),
+        frozenset({frozenset({2}), frozenset({0, 2})}),
+        frozenset({frozenset({1, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({0, 1}), frozenset({0, 1, 2})}): frozenset({
+        frozenset({frozenset({0}), frozenset({0, 1})}),
+        frozenset({frozenset({1}), frozenset({0, 1})}),
+        frozenset({frozenset({0, 2}), frozenset({0, 1, 2})}),
+        frozenset({frozenset({1, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({0, 2}), frozenset({0, 1, 2})}): frozenset({
+        frozenset({frozenset({0}), frozenset({0, 2})}),
+        frozenset({frozenset({2}), frozenset({0, 2})}),
+        frozenset({frozenset({0, 1}), frozenset({0, 1, 2})}),
+        frozenset({frozenset({1, 2}), frozenset({0, 1, 2})}),
+    }),
+    frozenset({frozenset({1, 2}), frozenset({0, 1, 2})}): frozenset({
+        frozenset({frozenset({1}), frozenset({1, 2})}),
+        frozenset({frozenset({2}), frozenset({1, 2})}),
+        frozenset({frozenset({0, 1}), frozenset({0, 1, 2})}),
+        frozenset({frozenset({0, 2}), frozenset({0, 1, 2})}),
+    }),
 }"""
 
         cubo = linegraph(my_cube)
@@ -794,13 +797,13 @@ frozenset2({
     b'abcdefghijkl'
     b'mnopqrstuvwxyz'
 )""")
-        self.assertEqual(pprint.pformat(letters, width=21), """\
+        self.assertEqual(pprint.pformat(letters, width=20), """\
 (
     b'abcdefghijkl'
     b'mnopqrstuvwx'
     b'yz'
 )""")
-        self.assertEqual(pprint.pformat(letters, width=19), """\
+        self.assertEqual(pprint.pformat(letters, width=21), """\
 (
     b'abcdefghijkl'
     b'mnopqrstuvwx'
@@ -868,26 +871,26 @@ frozenset2({
     def test_bytearray_wrap(self):
         self.assertEqual(pprint.pformat(bytearray(), width=1), "bytearray(b'')")
         letters = bytearray(b'abcdefghijklmnopqrstuvwxyz')
-        self.assertEqual(pprint.pformat(letters, width=40), repr(letters))
-        self.assertEqual(pprint.pformat(letters, width=28), """\
+        self.assertEqual(pprint.pformat(letters, width=41), repr(letters))
+        self.assertEqual(pprint.pformat(letters, width=22), """\
 bytearray((
     b'abcdefghijkl'
     b'mnopqrstuvwxyz'
 ))""")
-        self.assertEqual(pprint.pformat(letters, width=27), """\
+        self.assertEqual(pprint.pformat(letters, width=20), """\
 bytearray((
     b'abcdefghijkl'
     b'mnopqrstuvwx'
     b'yz'
 ))""")
-        self.assertEqual(pprint.pformat(letters, width=25), """\
+        self.assertEqual(pprint.pformat(letters, width=21), """\
 bytearray((
     b'abcdefghijkl'
     b'mnopqrstuvwx'
     b'yz'
 ))""")
         special = bytearray(range(16))
-        self.assertEqual(pprint.pformat(special, width=72), repr(special))
+        self.assertEqual(pprint.pformat(special, width=73), repr(special))
         self.assertEqual(pprint.pformat(special, width=57), """\
 bytearray((
     b'\\x00\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\t\\n\\x0b'
@@ -895,9 +898,8 @@ bytearray((
 ))""")
         self.assertEqual(pprint.pformat(special, width=41), """\
 bytearray((
-    b'\\x00\\x01\\x02\\x03'
-    b'\\x04\\x05\\x06\\x07\\x08\\t\\n\\x0b'
-    b'\\x0c\\r\\x0e\\x0f'
+    b'\\x00\\x01\\x02\\x03\\x04\\x05\\x06\\x07'
+    b'\\x08\\t\\n\\x0b\\x0c\\r\\x0e\\x0f'
 ))""")
         self.assertEqual(pprint.pformat(special, width=1), """\
 bytearray((
@@ -907,7 +909,7 @@ bytearray((
     b'\\x0c\\r\\x0e\\x0f'
 ))""")
         self.assertEqual(pprint.pformat({'a': 1, 'b': letters, 'c': 2},
-                                        width=31), """\
+                                        width=24), """\
 {
     'a': 1,
     'b': bytearray((
@@ -915,14 +917,14 @@ bytearray((
         b'mnopqrstuvwx'
         b'yz'
     )),
- 'c': 2,
+    'c': 2,
 }""")
-        self.assertEqual(pprint.pformat([[[[[letters]]]]], width=37), """\
+        self.assertEqual(pprint.pformat([[[[[letters]]]]], width=24), """\
 [[[[[bytearray((
     b'abcdefghijklmnop'
     b'qrstuvwxyz'
 ))]]]]]""")
-        self.assertEqual(pprint.pformat([[[[[special]]]]], width=50), """\
+        self.assertEqual(pprint.pformat([[[[[special]]]]], width=40), """\
 [[[[[bytearray((
     b'\\x00\\x01\\x02\\x03\\x04\\x05\\x06\\x07'
     b'\\x08\\t\\n\\x0b\\x0c\\r\\x0e\\x0f'

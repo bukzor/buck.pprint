@@ -93,11 +93,23 @@ class _safe_key:
         self.obj = obj
 
     def __lt__(self, other):
+        obj1 = self.safe_key()
+        obj2 = other.safe_key()
         try:
-            return self.obj < other.obj
+            return obj1 < obj2
         except TypeError:
             return ((str(type(self.obj)), id(self.obj)) < \
                     (str(type(other.obj)), id(other.obj)))
+
+    def safe_key(self):
+        if isinstance(self.obj, (set, frozenset)):
+            return (len(self.obj), sorted(_safe_key(x).safe_key() for x in self.obj))
+        else:
+            return self.obj
+
+    def __repr__(self):
+        return '_safe_key(%r)' % self.obj
+
 
 def _safe_tuple(t):
     "Helper function for comparing 2-tuples"
@@ -346,12 +358,10 @@ class PrettyPrinter:
             write(rep)
             return allowance + len(rep)
         write('(')
-        allowance += 1
         indent += self._indent_per_level
-        for rep in _wrap_bytes_repr(object, self._width - indent, 1):
+        for rep in _wrap_bytes_repr(object, self._width - indent):
             write('\n' + ' '*indent)
             write(rep)
-            allowance = len(rep)
         indent -= self._indent_per_level
         write('\n' + ' '*indent)
         write(')')
@@ -407,7 +417,6 @@ class PrettyPrinter:
             indent += self._indent_per_level
             write('\n')
             allowance = 0
-        width = max_width = self._width - indent + 1
         for ent in items:
             if not multibracket:
                 write(' ' * indent)
@@ -565,11 +574,27 @@ def _safe_repr(object, context, maxlevels, level):
         return "{%s}" % ", ".join(components), readable, recursive
 
     if (issubclass(typ, list) and r is list.__repr__) or \
-       (issubclass(typ, tuple) and r is tuple.__repr__):
+       (issubclass(typ, tuple) and r is tuple.__repr__) or \
+       (issubclass(typ, frozenset) and r is frozenset.__repr__) or \
+       (issubclass(typ, set) and r is set.__repr__):
         if issubclass(typ, list):
             if not object:
                 return "[]", True, False
             format = "[%s]"
+        elif issubclass(typ, set):
+            name = typ.__name__  # TODO qualname, module
+            if not object:
+                return name + "()", True, False
+            if typ is set:
+                format = "{%s}"
+            else:
+                format = name + "({%s})"
+            object = sorted(object, key=_safe_key)
+        elif issubclass(typ, frozenset):
+            if not object:
+                return "frozenset()", True, False
+            format = "frozenset({%s})"
+            object = sorted(object, key=_safe_key)
         elif len(object) == 1:
             format = "(%s,)"
         else:
@@ -621,16 +646,13 @@ def _perfcheck(object=None):
     print("_safe_repr:", t2 - t1)
     print("pformat:", t3 - t2)
 
-def _wrap_bytes_repr(object, width, allowance):
-    # FIXME: needs allowance tweaking
+def _wrap_bytes_repr(object, width):
     current = b''
     last = len(object) // 4 * 4
     for i in range(0, len(object), 4):
         part = object[i: i+4]
         candidate = current + part
-        if i == last:
-            width -= allowance
-        if len(repr(candidate)) > width:
+        if len(repr(candidate)) >= width:
             if current:
                 yield repr(current)
             current = part
